@@ -28,16 +28,23 @@ jobs:
           cd snake_game
           buildozer init || true
           echo "android.build_tools_version = 30.0.3" >> buildozer.spec
-          buildozer android clean
+
+          # Install cmdline-tools into Buildozer’s SDK path
           mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
           cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
           unzip tools.zip
           mv cmdline-tools latest
+
+          # Accept licenses
           yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=~/.buildozer/android/platform/android-sdk --licenses
+
+          # Install SDK components
           ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-            --sdk_root=~/.buildozer/android/platform/android-sdk \
-            "platform-tools" "platforms;android-31" "build-tools;30.0.3"
+          --sdk_root=~/.buildozer/android/platform/android-sdk \
+          "platform-tools" "platforms;android-31" "build-tools;30.0.3"
+
+          # Build the APK
           cd ~/work/snakegame/snakegame/snake_game
           buildozer -v android debug
 
