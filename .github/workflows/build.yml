@@ -28,33 +28,31 @@ jobs:
         cd snake_game
         buildozer init || true
 
-        # Inject required settings into buildozer.spec
         echo "android.build_tools_version = 30.0.3" >> buildozer.spec
         echo "android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk" >> buildozer.spec
         echo "android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r23b" >> buildozer.spec
         echo "android.accept_sdk_license = True" >> buildozer.spec
 
-        # Install Android cmdline-tools into the expected SDK path
+        # Download Android cmdline-tools
         mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
         cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
         wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
         unzip tools.zip
         mv cmdline-tools latest
 
-        # 👇 Fix: Symlink to make Buildozer happy
-        mkdir -p ~/.buildozer/android/platform/android-sdk/tools
-        ln -s ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest ~/.buildozer/android/platform/android-sdk/tools/bin
+        # ✅ FIXED PATH: Symlink to satisfy Buildozer's expected structure
+        mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
+        ln -sf ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest ~/.buildozer/android/platform/android-sdk/tools/bin/cmdline-tools
 
         # Accept licenses
-        yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=~/.buildozer/android/platform/android-sdk --licenses
+        yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses --sdk_root=~/.buildozer/android/platform/android-sdk
 
         # Install SDK components
         ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-        --sdk_root=~/.buildozer/android/platform/android-sdk \
-        "platform-tools" "platforms;android-31" "build-tools;30.0.3"
+          --sdk_root=~/.buildozer/android/platform/android-sdk \
+          "platform-tools" "platforms;android-31" "build-tools;30.0.3"
 
-        # Build the APK
-        cd ~/work/snakegame/snakegame/snake_game
+        # Build the APK (stay inside snake_game folder)
         buildozer -v android debug
 
     - name: Upload APK
