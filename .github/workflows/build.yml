@@ -38,15 +38,21 @@ jobs:
         yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --licenses
         $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "platform-tools" "platforms;android-31" "build-tools;30.0.3"
 
-    - name: Build APK
+        - name: Build APK
       run: |
         cd snake_game
         buildozer init || true
 
-        # Inject build tools version + sdk path to avoid auto-downloading broken version
+        # Inject build tools version (skip sdk_path here)
         echo "android.build_tools_version = 30.0.3" >> buildozer.spec
-        echo "android.sdk_path = $ANDROID_SDK_ROOT" >> buildozer.spec
 
+        # Clean and let Buildozer download its own SDK
+        buildozer android clean
+
+        # Accept licenses inside the SDK that Buildozer downloaded
+        yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=~/.buildozer/android/platform/android-sdk --licenses
+
+        # Now run the build
         buildozer -v android debug
 
     - name: Upload APK
