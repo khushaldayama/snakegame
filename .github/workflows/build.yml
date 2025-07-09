@@ -8,54 +8,57 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
 
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y zip unzip openjdk-11-jdk python3-pip wget
-          pip install --upgrade pip
-          pip install buildozer cython
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y zip unzip openjdk-11-jdk python3-pip wget
+        pip install --upgrade pip
+        pip install buildozer cython
 
-      - name: Set up Android SDK and Accept Licenses
-        run: |
-          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
-          cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
-          unzip tools.zip
-          mv cmdline-tools latest
+    - name: Set up Android SDK
+      run: |
+        mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
+        cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
+        unzip tools.zip
+        mv cmdline-tools latest
 
-          # ✅ Fix Buildozer SDK path confusion
-          mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
-          ln -s ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+        # ✅ Fix Buildozer's hardcoded expectation
+        mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
+        ln -s ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
 
-          yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=~/.buildozer/android/platform/android-sdk --licenses
+        # ✅ Accept licenses
+        yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=~/.buildozer/android/platform/android-sdk --licenses
 
-          ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-          --sdk_root=~/.buildozer/android/platform/android-sdk \
-          "platform-tools" "platforms;android-31" "build-tools;30.0.3"
+        # ✅ Install *ONLY* specific working version
+        ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+        --sdk_root=~/.buildozer/android/platform/android-sdk \
+        "platform-tools" "platforms;android-31" "build-tools;30.0.3"
 
-      - name: Build APK
-        working-directory: snake_game
-        run: |
-          buildozer init || true
+    - name: Build APK
+      working-directory: snake_game
+      run: |
+        buildozer init || true
 
-          echo "android.build_tools_version = 30.0.3" >> buildozer.spec
-          echo "android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk" >> buildozer.spec
-          echo "android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r23b" >> buildozer.spec
-          echo "android.accept_sdk_license = True" >> buildozer.spec
-          echo "android.archs = arm64-v8a" >> buildozer.spec
+        # ✅ Force only the correct version (no fallback to 36)
+        echo "android.build_tools_version = 30.0.3" >> buildozer.spec
+        echo "android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk" >> buildozer.spec
+        echo "android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r23b" >> buildozer.spec
+        echo "android.accept_sdk_license = True" >> buildozer.spec
+        echo "android.archs = arm64-v8a" >> buildozer.spec
 
-          buildozer -v android debug
+        buildozer -v android debug
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: SnakeGame-APK
-          path: snake_game/bin/*.apk
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: SnakeGame-APK
+        path: snake_game/bin/*.apk
