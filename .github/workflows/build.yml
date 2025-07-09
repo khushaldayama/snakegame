@@ -31,8 +31,9 @@ jobs:
           unzip tools.zip
           mv cmdline-tools latest
 
-          mkdir -p ~/.buildozer/android/platform/android-sdk/tools
-          ln -s ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest ~/.buildozer/android/platform/android-sdk/tools/bin
+          # ✅ Fix Buildozer SDK path confusion
+          mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
+          ln -s ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
 
           yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=~/.buildozer/android/platform/android-sdk --licenses
 
