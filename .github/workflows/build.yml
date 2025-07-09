@@ -8,51 +8,57 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
 
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y zip unzip openjdk-11-jdk python3-pip wget
-          pip install --upgrade pip
-          pip install buildozer cython
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y zip unzip openjdk-11-jdk python3-pip wget
+        pip install --upgrade pip
+        pip install buildozer cython
 
-      - name: Build APK
-        run: |
-          cd snake_game
-          buildozer init || true
-          echo "android.build_tools_version = 30.0.3" >> buildozer.spec
-          echo "android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk" >> buildozer.spec
-          echo "android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r23b" >> buildozer.spec
-          echo "android.accept_sdk_license = True" >> buildozer.spec
+    - name: Build APK
+      run: |
+        cd snake_game
+        buildozer init || true
 
-          # Install cmdline-tools into Buildozer’s SDK path
-          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
-          cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
-          unzip tools.zip
-          mv cmdline-tools latest
+        # Inject required settings into buildozer.spec
+        echo "android.build_tools_version = 30.0.3" >> buildozer.spec
+        echo "android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk" >> buildozer.spec
+        echo "android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r23b" >> buildozer.spec
+        echo "android.accept_sdk_license = True" >> buildozer.spec
 
-          # Accept licenses
-          yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=~/.buildozer/android/platform/android-sdk --licenses
+        # Install Android cmdline-tools into the expected SDK path
+        mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
+        cd ~/.buildozer/android/platform/android-sdk/cmdline-tools
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
+        unzip tools.zip
+        mv cmdline-tools latest
 
-          # Install SDK components
-          ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-          --sdk_root=~/.buildozer/android/platform/android-sdk \
-          "platform-tools" "platforms;android-31" "build-tools;30.0.3"
+        # 👇 Fix: Symlink to make Buildozer happy
+        mkdir -p ~/.buildozer/android/platform/android-sdk/tools
+        ln -s ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest ~/.buildozer/android/platform/android-sdk/tools/bin
 
-          # Build the APK
-          cd ~/work/snakegame/snakegame/snake_game
-          buildozer -v android debug
+        # Accept licenses
+        yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=~/.buildozer/android/platform/android-sdk --licenses
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: SnakeGame-APK
-          path: snake_game/bin/*.apk
+        # Install SDK components
+        ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+        --sdk_root=~/.buildozer/android/platform/android-sdk \
+        "platform-tools" "platforms;android-31" "build-tools;30.0.3"
+
+        # Build the APK
+        cd ~/work/snakegame/snakegame/snake_game
+        buildozer -v android debug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: SnakeGame-APK
+        path: snake_game/bin/*.apk
