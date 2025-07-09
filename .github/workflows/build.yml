@@ -28,6 +28,9 @@ jobs:
           cd snake_game
           buildozer init || true
           echo "android.build_tools_version = 30.0.3" >> buildozer.spec
+          echo "android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk" >> buildozer.spec
+          echo "android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r23b" >> buildozer.spec
+          echo "android.accept_sdk_license = True" >> buildozer.spec
 
           # Install cmdline-tools into Buildozer’s SDK path
           mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
