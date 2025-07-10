@@ -22,7 +22,7 @@ jobs:
         sudo apt install -y zip unzip openjdk-11-jdk python3-pip wget git
         pip install --upgrade pip
         pip install buildozer cython
-    
+
     - name: Set up Android SDK
       run: |
         mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
@@ -31,14 +31,11 @@ jobs:
         unzip tools.zip
         mv cmdline-tools latest
 
-        # Fix for sdkmanager path
         mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
         ln -s ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
 
-        # Accept licenses
         yes | ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=~/.buildozer/android/platform/android-sdk --licenses
 
-        # Install required components
         ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \
           --sdk_root=~/.buildozer/android/platform/android-sdk \
           "platform-tools" "platforms;android-31" "build-tools;30.0.3"
@@ -56,16 +53,19 @@ jobs:
         ANDROID_HOME: /home/runner/.buildozer/android/platform/android-sdk
         PATH: /home/runner/.buildozer/android/platform/android-sdk/platform-tools:/home/runner/.buildozer/android/platform/android-sdk/tools/bin:/home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:$PATH
       run: |
-        buildozer init || true
+        rm -f buildozer.spec
+        buildozer init
 
-        echo "requirements = python3,kivy" >> buildozer.spec
+        sed -i '/^requirements /c\requirements = python3,kivy' buildozer.spec
+        sed -i '/^android.arch /d' buildozer.spec
+        echo "android.archs = arm64-v8a" >> buildozer.spec
         echo "android.build_tools_version = 30.0.3" >> buildozer.spec
         echo "android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk" >> buildozer.spec
         echo "android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r23b" >> buildozer.spec
         echo "android.accept_sdk_license = True" >> buildozer.spec
-        echo "android.archs = arm64-v8a" >> buildozer.spec
 
         buildozer -v android debug
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
