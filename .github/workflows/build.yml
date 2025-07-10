@@ -53,11 +53,11 @@ jobs:
         ANDROID_HOME: /home/runner/.buildozer/android/platform/android-sdk
         PATH: /home/runner/.buildozer/android/platform/android-sdk/platform-tools:/home/runner/.buildozer/android/platform/android-sdk/tools/bin:/home/runner/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin:$PATH
       run: |
-        bash -c "rm -f buildozer.spec"
+        bash -c "rm -f buildozer.spec || true"
         buildozer init
 
-        sed -i '/^requirements /c\requirements = python3,kivy' buildozer.spec
-        sed -i '/^android.arch /d' buildozer.spec
+        sed -i '/^requirements /c\requirements = python3,kivy' buildozer.spec || true
+        sed -i '/^android.arch /d' buildozer.spec || true
         echo "android.archs = arm64-v8a" >> buildozer.spec
         echo "android.build_tools_version = 30.0.3" >> buildozer.spec
         echo "android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk" >> buildozer.spec
@@ -65,7 +65,7 @@ jobs:
         echo "android.accept_sdk_license = True" >> buildozer.spec
 
         buildozer -v android debug
-
+        
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
